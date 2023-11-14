@@ -1,42 +1,79 @@
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.Playwright;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
+package tests;
 
-public class TestBase {
-    // Deklarera Playwright-objekt
-    private static Playwright playwright;
-    // Deklarera Browser-objekt
-    protected static Browser browser;
-    // Deklarera BrowserContext-objekt
-    protected BrowserContext context;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    @BeforeClass
-    public static void setUp() {
-        // Initialisera Playwright och skapa en webbläsarinstans
-        playwright = Playwright.create();
-        browser = playwright.chromium().launch();
+public class ZalandoTest {
+
+    private WebDriver driver;
+
+    @BeforeEach
+    public void setUp() {
+        // Ange sökvägen till ChromeDriver
+        System.setProperty("webdriver.chrome.driver", "sökväg\\till\\chromedriver.exe");
+        // Skapa en instans av ChromeDriver
+        driver = new ChromeDriver();
+        // Gå till webbplatsen
+        driver.get("https://www.zalando.se");
     }
 
-    @Before
-    public void createNewContext() {
-        // Skapa en ny kontext (webbläsarsession) för varje testfall
-        context = browser.newContext();
+    @Test
+    public void testSearchProduct() {
+        // Hitta sökrutan och skicka söktermen
+        WebElement searchBox = driver.findElement(By.name("q"));
+        searchBox.sendKeys("skor");
+        searchBox.submit();
+
+        // Verifiera att sökresultat visas
+        WebElement searchResults = driver.findElement(By.className("search-results"));
+        assertTrue(searchResults.isDisplayed(), "Sökresultat visas inte korrekt");
     }
 
-    @After
-    public void closeContext() {
-        // Stäng den aktuella kontexten efter varje testfall
-        context.close();
+    @Test
+    public void testAddToCart() {
+        // Gå till en produktsida och lägg till produkten i varukorgen
+        WebElement productLink = driver.findElement(By.xpath("//a[@class='product-link']"));
+        productLink.click();
+
+        WebElement addToCartButton = driver.findElement(By.xpath("//button[contains(text(), 'Lägg i varukorg')]"));
+        addToCartButton.click();
+
+        // Verifiera att produkten har lagts till i varukorgen
+        WebElement cartIcon = driver.findElement(By.className("cart-icon"));
+        assertTrue(cartIcon.isDisplayed(), "Produkten lades inte till i varukorgen");
     }
 
-    @AfterClass
-    public static void tearDown() {
-        // Stäng webbläsaren och släpp Playwright-resurserna när alla test är klara
-        browser.close();
-        playwright.close();
+    @Test
+    public void testLogin() {
+        // Gå till inloggningssidan
+        WebElement loginLink = driver.findElement(By.xpath("//a[contains(text(), 'Logga in')]"));
+        loginLink.click();
+
+        // Ange användarnamn och lösenord och logga in
+        WebElement usernameInput = driver.findElement(By.id("username"));
+        WebElement passwordInput = driver.findElement(By.id("password"));
+        WebElement loginButton = driver.findElement(By.id("login-button"));
+
+        usernameInput.sendKeys("helena.matikainen@hotmail.se");
+        passwordInput.sendKeys("Greku7219");
+        loginButton.click();
+
+        // Verifiera att inloggningen var framgångsrik
+        WebElement userGreeting = driver.findElement(By.xpath("//div[@class='user-greeting']"));
+        assertTrue(userGreeting.isDisplayed(), "Inloggning misslyckades");
+    }
+
+    @AfterEach
+    public void tearDown() {
+        // Stäng webbläsaren efter varje testfall
+        if (driver != null) {
+            driver.quit();
+        }
     }
 }
